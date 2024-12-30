@@ -9,9 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,10 +27,12 @@ public class WireguardService {
     }
 
     public List<DeviceDTO> getStat() throws Exception {
-        File file = new File("/home/agungdh/IdeaProjects/wireguard_monitoring_be/sample.json");
+        String[] command = { "sudo", "bash", "wg-json.sh" };
+
+        StringBuilder output = getStringBuilder(command);
 
         // Read JSON file and parse into JsonNode
-        JsonNode jsonNode = objectMapper.readTree(file);
+        JsonNode jsonNode = objectMapper.readTree(output.toString());
 
         // Get wg0
         JsonNode wg0Node = jsonNode.get("wg0");
@@ -64,7 +64,7 @@ public class WireguardService {
     }
 
     public List<ClientDTO> getClient() throws Exception {
-        File file = new File("/home/agungdh/IdeaProjects/wireguard_monitoring_be/wg0.config");
+        File file = new File("/etc/wireguard/wg0.conf");
 
         List<ClientDTO> clients = new ArrayList<>();
 
@@ -72,7 +72,7 @@ public class WireguardService {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.contains("###")) {
-                    String client = line.replace("### Client", "");
+                    String client = line.replace("### Client ", "");
 
                     reader.readLine();
                     String publicKey = reader.readLine().replace("PublicKey = ", "");
@@ -87,4 +87,22 @@ public class WireguardService {
 
         return clients;
     }
+
+    private static StringBuilder getStringBuilder(String[] command) throws IOException {
+        // Start the process
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+
+        // Capture process output
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+        }
+        return output;
+    }
+
 }
