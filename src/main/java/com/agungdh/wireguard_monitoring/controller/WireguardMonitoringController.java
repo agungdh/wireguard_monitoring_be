@@ -1,26 +1,33 @@
 package com.agungdh.wireguard_monitoring.controller;
 
+import com.agungdh.wireguard_monitoring.dto.DeviceDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.Iterator;
-import java.util.Map;
+import java.math.BigInteger;
+import java.time.Instant;
+import java.util.*;
 
 @RestController
 @RequestMapping("/wireguard")
 public class WireguardMonitoringController {
     @GetMapping
-    public void stat()  throws Exception{
-        File file = new File("/home/debian/repo/Wireguard Monitoring/sample.json");
+    public ResponseEntity<List<DeviceDTO>> stat() throws Exception {
+        File file = new File("/home/agungdh/IdeaProjects/wireguard_monitoring_be/sample.json");
 
         // Create ObjectMapper instance
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
         // Read JSON file and parse into JsonNode
         JsonNode jsonNode = objectMapper.readTree(file);
@@ -32,16 +39,25 @@ public class WireguardMonitoringController {
         JsonNode peersNode = wg0Node.get("peers");
 
         Iterator<Map.Entry<String, JsonNode>> fields = peersNode.fields();
+        List<DeviceDTO> devices = new ArrayList<>();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> field = fields.next();
-            String key = field.getKey();
+            String publicKey = field.getKey();
             JsonNode value = field.getValue();
-            System.out.println("key: " + key + " value: " + value);
+
+            List<String> allowedIps = objectMapper.readValue(value.get("allowedIps").toString(), new TypeReference<>() {
+            });
+
+            DeviceDTO deviceDTO = new DeviceDTO(publicKey, value.get("presharedKey").toString(),
+                    value.hasNonNull("endpoint") ? value.get("endpoint").toString() : null,
+                    value.hasNonNull("latestHandshake") ? Instant.ofEpochSecond(value.get("latestHandshake").asLong()) : null,
+                    value.hasNonNull("transferRx") ? new BigInteger(value.get("transferRx").toString()) : null,
+                    value.hasNonNull("transferTx") ? new BigInteger(value.get("transferTx").toString()) : null,
+                    allowedIps);
+
+            devices.add(deviceDTO);
         }
 
-//        // Access specific fields (example)
-//        if (jsonNode.has("wg0")) {
-//            System.out.println("Value of 'key': " + jsonNode.get("wg0").toPrettyString());
-//        }
+        return ResponseEntity.ok(devices);
     }
 }
