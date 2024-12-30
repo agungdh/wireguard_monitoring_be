@@ -1,4 +1,4 @@
-name: GraalVM build
+name: Build Native
 on: [push, pull_request]
 jobs:
   build:
@@ -16,4 +16,4 @@ jobs:
           java --version
           native-image --version
       - name: Example step using Gradle plugin # https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html
-        run: gradlew nativeCompile
+        run: ./gradlew nativeCompile
