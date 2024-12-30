@@ -75,10 +75,10 @@ public class WireguardService {
                     String client = line.replace("### Client", "");
 
                     reader.readLine();
-                    String publicKey = reader.readLine();
-                    String presharedKey = reader.readLine();
+                    String publicKey = reader.readLine().replace("PublicKey = ", "");
+                    String presharedKey = reader.readLine().replace("PresharedKey = ", "");
 
-                    ClientDTO clientDTO = new ClientDTO(client, publicKey, presharedKey);
+                    ClientDTO clientDTO = new ClientDTO(client, publicKey, presharedKey, null);
 
                     clients.add(clientDTO);
                 }
