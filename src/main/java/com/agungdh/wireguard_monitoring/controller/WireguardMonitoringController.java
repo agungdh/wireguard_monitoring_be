@@ -48,11 +48,11 @@ public class WireguardMonitoringController {
             List<String> allowedIps = objectMapper.readValue(value.get("allowedIps").toString(), new TypeReference<>() {
             });
 
-            DeviceDTO deviceDTO = new DeviceDTO(publicKey, value.get("presharedKey").toString(),
-                    value.hasNonNull("endpoint") ? value.get("endpoint").toString() : null,
+            DeviceDTO deviceDTO = new DeviceDTO(publicKey, value.get("presharedKey").asText(),
+                    value.hasNonNull("endpoint") ? value.get("endpoint").asText() : null,
                     value.hasNonNull("latestHandshake") ? Instant.ofEpochSecond(value.get("latestHandshake").asLong()) : null,
-                    value.hasNonNull("transferRx") ? new BigInteger(value.get("transferRx").toString()) : null,
-                    value.hasNonNull("transferTx") ? new BigInteger(value.get("transferTx").toString()) : null,
+                    value.hasNonNull("transferRx") ? new BigInteger(value.get("transferRx").asText()) : null,
+                    value.hasNonNull("transferTx") ? new BigInteger(value.get("transferTx").asText()) : null,
                     allowedIps);
 
             devices.add(deviceDTO);
