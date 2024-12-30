@@ -34,6 +34,14 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+graalvmNative {
+    binaries {
+        main {
+            buildArgs = ['-march=compatibility']
+        }
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
